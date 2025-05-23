@@ -19,6 +19,8 @@ references I use down below.
 # IMPORTANT NOTES
 Fetch, Decode, Execute loop an emulator does these three task:
 - *Fetch* the instructions from memeory at the current PC (program timer)
+  - Instructioins are 2 successive bytes 
+  - Combines them into 16-bit instructions
 - *Decode* the instructions to find out what the emulator should do
 - *Execute* the instructions
 
