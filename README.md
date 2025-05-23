@@ -1,6 +1,6 @@
 # CHIP 8 EMULATION
 This project is going to be my entry into emulation development. Initially I wanted to get into
-creating a gameboy emulator, however I a bit too overwhelmed so I decided on the *Hello World* 
+creating a gameboy emulator, however I am bit too overwhelmed so I decided on the *Hello World* 
 of emulation. This README will serve as a small journal through my learnings. I will place the
 references I use down below.
 
