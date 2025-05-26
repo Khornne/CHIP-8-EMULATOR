@@ -14,7 +14,6 @@ typedef struct {
   SDL_Window *window;
   SDL_Renderer *renderer;
 } sdl_t;
-
 sdl_t sdl;
 
 bool init_sdl(sdl_t *sdl) {
@@ -51,6 +50,19 @@ void clear_window(const sdl_t sdl) {
 // updated changes in window
 void screen_update(sdl_t sdl) { SDL_RenderPresent(sdl.renderer); }
 
+// User input handler
+void user_input(void) {
+  SDL_Event event;
+
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+    case SDL_QUIT: // End Program
+      exit(0);
+      break;
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   // SDL init
   sdl_t sdl = {0};
@@ -62,7 +74,9 @@ int main(int argc, char *argv[]) {
 
   // Main loop
   while (true) {
-    SDL_Delay(16); // Delay for 60hz/60fps
+    user_input();
+
+    SDL_Delay(16); // Delay for 60hz/60fps-ish
 
     screen_update(sdl);
   }
