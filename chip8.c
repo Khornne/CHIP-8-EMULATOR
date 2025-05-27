@@ -1,12 +1,4 @@
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_error.h>
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_log.h>
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_stdinc.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_video.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -123,7 +115,7 @@ void final_cleanup(void) {
 
 // Initial Screen clearing it to background color
 void clear_window(const sdl_t sdl) {
-  SDL_SetRenderDrawColor(sdl.renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+  SDL_SetRenderDrawColor(sdl.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(sdl.renderer);
 }
 
@@ -147,7 +139,7 @@ void user_input(chip8_t *chip8) {
       case SDLK_SPACE: // Spacebar
         if (chip8->state == RUNNING) {
           chip8->state = PAUSED;
-          puts("===PASUED===");
+          puts("===PAUSED===");
 
         } else {
           chip8->state = RUNNING;
