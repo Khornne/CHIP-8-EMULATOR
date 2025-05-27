@@ -8,6 +8,7 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,6 +17,28 @@ typedef struct {
   SDL_Renderer *renderer;
 } sdl_t;
 sdl_t sdl;
+
+typedef enum {
+  QUIT,
+  RUNNING,
+  PAUSED,
+} emu_state_t;
+
+typedef struct {
+  emu_state_t state;
+  uint8_t ram[4096];
+  uint16_t PC;   // Program Counter
+  uint16_t I;    // 12 bit index register
+  uint8_t V[16]; // V0 - VF data register
+  uint16_t stack[16];
+  uint8_t stack_pointer;
+  uint8_t delay_timer;   // Lowers to 60hz when > 0
+  uint8_t sound_timer;   // Lowers to 60hz and plays sounds when > 0
+  bool display[64 * 32]; // Original Chip-8 pixel resolution
+  bool draw_flag;
+  bool key[16];   // 0x0- 0xF Hex Keypad
+  char *rom_name; // Name of ROM that is loaded
+} chip8_t;
 
 bool init_sdl(sdl_t *sdl) {
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -35,6 +58,53 @@ bool init_sdl(sdl_t *sdl) {
   }
   return true; // Success
 }
+
+bool init_chip8(chip8_t *chip8, const char rom_name[]) {
+  const uint32_t start_up = 0x200; // Chip-8 ROMs load up to 0x200
+  const uint8_t font[80] = {
+      0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+      0x20, 0x60, 0x20, 0x20, 0x70, // 1
+      0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+      0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+      0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+      0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+      0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+      0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+      0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+      0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+      0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+      0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+      0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+      0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+      0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+      0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+  };
+
+  // Load Font
+  memcpy(&chip8->ram[0], font, sizeof(font));
+  // Load ROM
+
+  // Open ROM
+  FILE *rom = fopen(rom_name, "rb");
+  if (!rom) {
+    SDL_Log("Error ROM file %s failed to load or is invalid\n", rom_name);
+    return false;
+  }
+  // Check ROM size
+  fseek(rom, 0, SEEK_END);
+  const size_t rom_size = ftell(rom);
+  const size_t max_size = sizeof chip8->ram - start_up;
+  rewind(rom);
+
+  if (rom_size > max_size) {
+    SDL_Log("Error ROM file %s failed to load or is invalid\n", rom_name);
+    return false;
+  }
+  // Defaults
+  chip8->state = RUNNING; // Default emu state on/running
+  chip8->PC = start_up;   // Start program counter at ROM start_up
+  return true;
+};
 
 void final_cleanup(void) {
   SDL_DestroyRenderer(sdl.renderer);
