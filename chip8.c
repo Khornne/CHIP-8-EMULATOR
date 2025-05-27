@@ -59,7 +59,7 @@ bool init_sdl(sdl_t *sdl) {
   return true; // Success
 }
 
-bool init_chip8(chip8_t *chip8, const char rom_name[]) {
+bool init_chip8(chip8_t *chip8, char rom_name[]) {
   const uint32_t start_up = 0x200; // Chip-8 ROMs load up to 0x200
   const uint8_t font[80] = {
       0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -100,9 +100,18 @@ bool init_chip8(chip8_t *chip8, const char rom_name[]) {
     SDL_Log("Error ROM file %s failed to load or is invalid\n", rom_name);
     return false;
   }
+
+  if (fread(&chip8->ram, rom_size, 1, rom) != 1) {
+    SDL_Log("Unable to read ROM file  %s in memory\n", rom_name);
+    return false;
+  }
+
+  fclose(rom);
+
   // Defaults
   chip8->state = RUNNING; // Default emu state on/running
   chip8->PC = start_up;   // Start program counter at ROM start_up
+  chip8->rom_name = rom_name;
   return true;
 };
 
@@ -122,7 +131,7 @@ void clear_window(const sdl_t sdl) {
 void screen_update(sdl_t sdl) { SDL_RenderPresent(sdl.renderer); }
 
 // User input handler
-void user_input(void) {
+void user_input(chip8_t *chip8) {
   SDL_Event event;
 
   while (SDL_PollEvent(&event)) {
@@ -132,8 +141,17 @@ void user_input(void) {
       return;
     case SDL_KEYDOWN:
       switch (event.key.keysym.sym) {
-      case SDLK_ESCAPE:
+      case SDLK_ESCAPE: // Escape key
         exit(0);
+        return;
+      case SDLK_SPACE: // Spacebar
+        if (chip8->state == RUNNING) {
+          chip8->state = PAUSED;
+          puts("===PASUED===");
+
+        } else {
+          chip8->state = RUNNING;
+        };
         return;
 
       default:
@@ -145,17 +163,27 @@ void user_input(void) {
 }
 
 int main(int argc, char *argv[]) {
+  // Default Usage message
+  if (argc > 2) {
+    fprintf(stderr, "Usage: %s <rom_name>\b", argv[0]);
+    exit(EXIT_FAILURE);
+  };
   // SDL init
   sdl_t sdl = {0};
   if (!init_sdl(&sdl))
+    exit(EXIT_FAILURE);
+
+  // CHIP-8 init
+  chip8_t chip8;
+  if (!init_chip8(&chip8, argv[1]))
     exit(EXIT_FAILURE);
 
   // Render Clear
   clear_window(sdl);
 
   // Main loop
-  while (true) {
-    user_input();
+  while (chip8.state != QUIT) {
+    user_input(&chip8);
 
     SDL_Delay(16); // Delay for 60hz/60fps-ish
 
