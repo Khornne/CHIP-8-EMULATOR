@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_error.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_log.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_render.h>
@@ -58,6 +59,16 @@ void user_input(void) {
     switch (event.type) {
     case SDL_QUIT: // End Program
       exit(0);
+      return;
+    case SDL_KEYDOWN:
+      switch (event.key.keysym.sym) {
+      case SDLK_ESCAPE:
+        exit(0);
+        return;
+
+      default:
+        break;
+      }
       break;
     }
   }
